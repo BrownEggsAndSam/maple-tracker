@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MapleStory Character Tracker</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #111;
+      color: #f4f4f4;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+    .container {
+      max-width: 600px;
+      width: 100%;
+    }
+    input {
+      padding: 10px;
+      width: 70%;
+      margin-right: 10px;
+      border: none;
+      border-radius: 5px;
+    }
+    button {
+      padding: 10px;
+      background-color: #22c55e;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    pre {
+      background-color: #1e1e1e;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 20px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>MapleStory Tracker</h1>
+    <input type="text" id="charName" placeholder="Enter your IGN" />
+    <button id="fetchBtn">Refresh</button>
+    <pre id="output">Loading saved data...</pre>
+  </div>
+  <script>
+    function renderOutput(data) {
+      document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+    }
+
+    async function fetchStats() {
+      const name = document.getElementById('charName').value.trim();
+      if (!name) return alert("Please enter a character name.");
+
+      const url = `https://maplestory.nexon.net/api/rankings/overall?character_name=${encodeURIComponent(name)}&page_index=1`;
+
+      try {
+        const res = await fetch(url);
+        const json = await res.json();
+        const found = json.ranks.find(c => c.CharacterName.toLowerCase() === name.toLowerCase());
+
+        if (!found) {
+          document.getElementById('output').textContent = "Character not found.";
+          return;
+        }
+
+        localStorage.setItem('mapleData', JSON.stringify(found));
+        renderOutput(found);
+      } catch (error) {
+        document.getElementById('output').textContent = "Error fetching data.";
+        console.error(error);
+      }
+    }
+
+    document.getElementById('fetchBtn').addEventListener('click', fetchStats);
+
+    window.onload = () => {
+      const saved = localStorage.getItem('mapleData');
+      if (saved) {
+        renderOutput(JSON.parse(saved));
+      } else {
+        document.getElementById('output').textContent = "No saved data yet.";
+      }
+    }
+  </script>
+</body>
+</html>
