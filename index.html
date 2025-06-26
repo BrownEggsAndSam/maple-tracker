@@ -1,17 +1,39 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Maple Tracker</title>
+  <meta charset="UTF-8">
+  <title>MapleStory Tracker</title>
   <style>
-    body { background: #111; color: #eee; font-family: sans-serif; padding: 2rem; }
-    input, button { padding: 0.5rem; margin-right: 0.5rem; }
-    pre { background: #222; padding: 1rem; border-radius: 6px; margin-top: 1rem; }
+    body {
+      background: #111;
+      color: #eee;
+      font-family: sans-serif;
+      padding: 2rem;
+    }
+    input, button {
+      padding: 0.5rem;
+      margin-right: 0.5rem;
+      border-radius: 5px;
+      border: none;
+    }
+    button {
+      background: #22c55e;
+      color: white;
+      cursor: pointer;
+    }
+    pre {
+      background: #222;
+      padding: 1rem;
+      border-radius: 6px;
+      margin-top: 1rem;
+      white-space: pre-wrap;
+    }
   </style>
 </head>
 <body>
   <h1>MapleRanks Scraper</h1>
   <input type="text" id="ign" placeholder="Enter IGN (e.g. Samwyze)" />
-  <button onclick="scrape()">Fetch</button>
+  <button id="fetchBtn">Fetch</button>
   <pre id="output">Loading saved data...</pre>
 
   <script>
@@ -24,10 +46,10 @@
         const res = await fetch(url);
         const html = await res.text();
 
-        // Extract level and job with regex
-        const levelMatch = html.match(/Level\\s+(\\d+)/);
-        const jobMatch = html.match(/<div class=\"font-bold text-xl\">([^<]+)<\\/div>/);
-        const worldMatch = html.match(/World:\\s*<[^>]+>([^<]+)<\\/span>/);
+        // Scrape key info from the page
+        const levelMatch = html.match(/Level\s+(\d+)/);
+        const jobMatch = html.match(/<div class="font-bold text-xl">([^<]+)<\/div>/);
+        const worldMatch = html.match(/World:\s*<\/span>\s*<span[^>]*>([^<]+)<\/span>/);
 
         const data = {
           ign,
@@ -37,7 +59,6 @@
           scrapedAt: new Date().toISOString()
         };
 
-        // Save locally
         localStorage.setItem("mapleStats", JSON.stringify(data));
         document.getElementById("output").textContent = JSON.stringify(data, null, 2);
       } catch (err) {
@@ -46,10 +67,15 @@
       }
     }
 
+    // Attach handler after DOM loads
     window.onload = () => {
+      document.getElementById("fetchBtn").addEventListener("click", scrape);
+
       const saved = localStorage.getItem("mapleStats");
       if (saved) {
         document.getElementById("output").textContent = JSON.stringify(JSON.parse(saved), null, 2);
+      } else {
+        document.getElementById("output").textContent = "No saved data yet.";
       }
     };
   </script>
