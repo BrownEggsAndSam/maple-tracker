@@ -40,17 +40,17 @@
     async function scrape() {
       const ign = document.getElementById('ign').value.trim();
       if (!ign) return alert("Enter a character name!");
-
-      const url = `https://mapleranks.com/u/${encodeURIComponent(ign)}`;
+  
+      // 👇 CORS proxy added here
+      const url = `https://corsproxy.io/?https://mapleranks.com/u/${encodeURIComponent(ign)}`;
       try {
         const res = await fetch(url);
         const html = await res.text();
-
-        // Scrape key info from the page
+  
         const levelMatch = html.match(/Level\s+(\d+)/);
         const jobMatch = html.match(/<div class="font-bold text-xl">([^<]+)<\/div>/);
         const worldMatch = html.match(/World:\s*<\/span>\s*<span[^>]*>([^<]+)<\/span>/);
-
+  
         const data = {
           ign,
           level: levelMatch ? levelMatch[1] : "N/A",
@@ -58,7 +58,7 @@
           world: worldMatch ? worldMatch[1].trim() : "N/A",
           scrapedAt: new Date().toISOString()
         };
-
+  
         localStorage.setItem("mapleStats", JSON.stringify(data));
         document.getElementById("output").textContent = JSON.stringify(data, null, 2);
       } catch (err) {
@@ -66,11 +66,9 @@
         console.error(err);
       }
     }
-
-    // Attach handler after DOM loads
+  
     window.onload = () => {
       document.getElementById("fetchBtn").addEventListener("click", scrape);
-
       const saved = localStorage.getItem("mapleStats");
       if (saved) {
         document.getElementById("output").textContent = JSON.stringify(JSON.parse(saved), null, 2);
@@ -79,5 +77,6 @@
       }
     };
   </script>
+
 </body>
 </html>
