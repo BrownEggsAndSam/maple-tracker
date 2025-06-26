@@ -1,92 +1,57 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MapleStory Character Tracker</title>
+  <title>Maple Tracker</title>
   <style>
-    body {
-      font-family: sans-serif;
-      background-color: #111;
-      color: #f4f4f4;
-      padding: 20px;
-      display: flex;
-      justify-content: center;
-    }
-    .container {
-      max-width: 600px;
-      width: 100%;
-    }
-    input {
-      padding: 10px;
-      width: 70%;
-      margin-right: 10px;
-      border: none;
-      border-radius: 5px;
-    }
-    button {
-      padding: 10px;
-      background-color: #22c55e;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    pre {
-      background-color: #1e1e1e;
-      padding: 15px;
-      border-radius: 8px;
-      margin-top: 20px;
-      white-space: pre-wrap;
-    }
+    body { background: #111; color: #eee; font-family: sans-serif; padding: 2rem; }
+    input, button { padding: 0.5rem; margin-right: 0.5rem; }
+    pre { background: #222; padding: 1rem; border-radius: 6px; margin-top: 1rem; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>MapleStory Tracker</h1>
-    <input type="text" id="charName" placeholder="Enter your IGN" />
-    <button id="fetchBtn">Refresh</button>
-    <pre id="output">Loading saved data...</pre>
-  </div>
+  <h1>MapleRanks Scraper</h1>
+  <input type="text" id="ign" placeholder="Enter IGN (e.g. Samwyze)" />
+  <button onclick="scrape()">Fetch</button>
+  <pre id="output">Loading saved data...</pre>
+
   <script>
-    function renderOutput(data) {
-      document.getElementById('output').textContent = JSON.stringify(data, null, 2);
-    }
+    async function scrape() {
+      const ign = document.getElementById('ign').value.trim();
+      if (!ign) return alert("Enter a character name!");
 
-    async function fetchStats() {
-      const name = document.getElementById('charName').value.trim();
-      if (!name) return alert("Please enter a character name.");
-
-      const url = `https://maplestory.nexon.net/api/rankings/overall?character_name=${encodeURIComponent(name)}&page_index=1`;
-
+      const url = `https://mapleranks.com/u/${encodeURIComponent(ign)}`;
       try {
         const res = await fetch(url);
-        const json = await res.json();
-        const found = json.ranks.find(c => c.CharacterName.toLowerCase() === name.toLowerCase());
+        const html = await res.text();
 
-        if (!found) {
-          document.getElementById('output').textContent = "Character not found.";
-          return;
-        }
+        // Extract level and job with regex
+        const levelMatch = html.match(/Level\\s+(\\d+)/);
+        const jobMatch = html.match(/<div class=\"font-bold text-xl\">([^<]+)<\\/div>/);
+        const worldMatch = html.match(/World:\\s*<[^>]+>([^<]+)<\\/span>/);
 
-        localStorage.setItem('mapleData', JSON.stringify(found));
-        renderOutput(found);
-      } catch (error) {
-        document.getElementById('output').textContent = "Error fetching data.";
-        console.error(error);
+        const data = {
+          ign,
+          level: levelMatch ? levelMatch[1] : "N/A",
+          job: jobMatch ? jobMatch[1].trim() : "N/A",
+          world: worldMatch ? worldMatch[1].trim() : "N/A",
+          scrapedAt: new Date().toISOString()
+        };
+
+        // Save locally
+        localStorage.setItem("mapleStats", JSON.stringify(data));
+        document.getElementById("output").textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        document.getElementById("output").textContent = "Failed to fetch stats.";
+        console.error(err);
       }
     }
-
-    document.getElementById('fetchBtn').addEventListener('click', fetchStats);
 
     window.onload = () => {
-      const saved = localStorage.getItem('mapleData');
+      const saved = localStorage.getItem("mapleStats");
       if (saved) {
-        renderOutput(JSON.parse(saved));
-      } else {
-        document.getElementById('output').textContent = "No saved data yet.";
+        document.getElementById("output").textContent = JSON.stringify(JSON.parse(saved), null, 2);
       }
-    }
+    };
   </script>
 </body>
 </html>
