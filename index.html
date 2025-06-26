@@ -41,15 +41,17 @@
       const ign = document.getElementById('ign').value.trim();
       if (!ign) return alert("Enter a character name!");
   
-      // 👇 CORS proxy added here
       const url = `https://corsproxy.io/?https://mapleranks.com/u/${encodeURIComponent(ign)}`;
       try {
         const res = await fetch(url);
         const html = await res.text();
   
-        const levelMatch = html.match(/Level\s+(\d+)/);
-        const jobMatch = html.match(/<div class="font-bold text-xl">([^<]+)<\/div>/);
-        const worldMatch = html.match(/World:\s*<\/span>\s*<span[^>]*>([^<]+)<\/span>/);
+        console.log(html); // 👈 See what HTML is returned
+  
+        // 🧠 Updated regex matchers (2025 MapleRanks structure)
+        const levelMatch = html.match(/<div class="text-2xl font-bold[^>]*">Level (\d+)<\/div>/);
+        const jobMatch = html.match(/<div class="text-lg[^>]*">([^<]+)<\/div>\s*<div class="text-sm text-muted">Class<\/div>/);
+        const worldMatch = html.match(/<div class="text-lg[^>]*">([^<]+)<\/div>\s*<div class="text-sm text-muted">World<\/div>/);
   
         const data = {
           ign,
@@ -69,6 +71,7 @@
   
     window.onload = () => {
       document.getElementById("fetchBtn").addEventListener("click", scrape);
+  
       const saved = localStorage.getItem("mapleStats");
       if (saved) {
         document.getElementById("output").textContent = JSON.stringify(JSON.parse(saved), null, 2);
